@@ -9,5 +9,5 @@ type Link struct {
 type WebFinger struct {
 	Aliases []string `json:"aliases,omitempty"`
 	Links   []Link   `json:"links,omitempty"`
-	Subject string   `json:"Subject,omitempty"`
+	Subject string   `json:"subject,omitempty"`
 }
