@@ -10,6 +10,9 @@ type Config struct {
 	APHost        string
 	APSerivceName string
 
+	DBType       string
+	DBConnString string
+
 	LoggerConfig string
 
 	RSAPrivateKey string
@@ -32,6 +35,22 @@ func CollectConfig() *Config {
 		config.APSerivceName = "GoActivityRelay"
 	} else {
 		config.APSerivceName = envAPServiceName
+	}
+
+	// AP_SERVICE_NAME
+	var envDBType = os.Getenv("AP_SERVICE_NAME")
+	if envDBType == "" {
+		config.DBType = "sqlite"
+	} else {
+		config.DBType = envDBType
+	}
+
+	// AP_SERVICE_NAME
+	var envDBConnString = os.Getenv("AP_SERVICE_NAME")
+	if envDBConnString == "" {
+		config.DBConnString = "litepub.db"
+	} else {
+		config.DBConnString = envDBConnString
 	}
 
 	// LOG_LEVEL

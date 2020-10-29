@@ -9,5 +9,10 @@ require (
 	github.com/lunixbochs/vtclean v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
+	gorm.io/driver/mysql v1.0.3
+	gorm.io/driver/postgres v1.0.5
+	gorm.io/driver/sqlite v1.1.3
+	gorm.io/gorm v1.20.5
 )

@@ -72,7 +72,7 @@ func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey) error {
 			{
 				HRef: fmt.Sprintf("https://%s/actor", APHost),
 				Rel: "self",
-				Type: "application/activity+json",
+				Type: "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
 			},
 		},
 		Subject: fmt.Sprintf("acct:relay@%s", APHost),

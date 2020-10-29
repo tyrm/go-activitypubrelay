@@ -7,6 +7,8 @@ import (
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
 	"io/ioutil"
+	"litepub1/activitypub"
+	"litepub1/models"
 	"litepub1/web"
 	"os"
 	"os/signal"
@@ -44,9 +46,19 @@ func main() {
 		return
 	}
 
+	err = models.Init(config.DBType, config.DBConnString)
+	if err != nil {
+		logger.Errorf("Could init models: %s", err.Error())
+		return
+	}
 
+	activitypub.Init()
 
-	web.Init(config.APHost, config.APSerivceName, rsaKey)
+	err = web.Init(config.APHost, config.APSerivceName, rsaKey)
+	if err != nil {
+		logger.Errorf("Could init web: %s", err.Error())
+		return
+	}
 
 	// Wait for SIGINT and SIGTERM (HIT CTRL-C)
 	nch := make(chan os.Signal)
