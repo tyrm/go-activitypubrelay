@@ -6,7 +6,13 @@ import (
 	"net/http"
 )
 
-func HandleWebFinger(w http.ResponseWriter, r *http.Request) {
+type WebFinger struct {
+	Aliases []string `json:"aliases,omitempty"`
+	Links   []Link   `json:"links,omitempty"`
+	Subject string   `json:"subject,omitempty"`
+}
+
+func HandleWellKnownWebFinger(w http.ResponseWriter, r *http.Request) {
 	resource, ok := r.URL.Query()["resource"]
 	if !ok || len(resource[0]) < 1 {
 		http.Error(w, "Url Param 'key' is missing", http.StatusBadRequest)

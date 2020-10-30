@@ -37,16 +37,16 @@ func CollectConfig() *Config {
 		config.APSerivceName = envAPServiceName
 	}
 
-	// AP_SERVICE_NAME
-	var envDBType = os.Getenv("AP_SERVICE_NAME")
+	// DB_TYPE
+	var envDBType = os.Getenv("DB_TYPE")
 	if envDBType == "" {
 		config.DBType = "sqlite"
 	} else {
 		config.DBType = envDBType
 	}
 
-	// AP_SERVICE_NAME
-	var envDBConnString = os.Getenv("AP_SERVICE_NAME")
+	// DB_CONN_STRING
+	var envDBConnString = os.Getenv("DB_CONN_STRING")
 	if envDBConnString == "" {
 		config.DBConnString = "litepub.db"
 	} else {

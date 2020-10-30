@@ -3,6 +3,8 @@ module litepub1
 go 1.14
 
 require (
+	github.com/go-fed/httpsig v1.0.0
+	github.com/gorilla/context v1.1.1
 	github.com/gorilla/mux v1.8.0
 	github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a // indirect
 	github.com/juju/loggo v0.0.0-20200526014432-9ce3a2e09b5e
