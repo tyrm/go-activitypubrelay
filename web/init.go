@@ -123,6 +123,7 @@ func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey) error {
 	r.Use(MiddlewareLogRequest)
 
 	r.HandleFunc("/actor", HandleActor).Methods("GET")
+	r.HandleFunc("/inbox", HandleInbox).Methods("POST")
 	r.HandleFunc("/nodeinfo/2.0.json", HandleNodeinfo20).Methods("GET")
 	r.HandleFunc("/.well-known/nodeinfo", HandleWellKnownNodeInfo).Methods("GET")
 	r.HandleFunc("/.well-known/webfinger", HandleWellKnownWebFinger).Methods("GET")

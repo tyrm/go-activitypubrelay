@@ -1,13 +1,16 @@
 package activitypub
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 type PublicKey struct {
@@ -41,6 +44,59 @@ type Actor struct {
 	URL               string      `json:"url,omitempty"`
 }
 
+func (a *Actor) GetPublicKey() (*rsa.PublicKey, error) {
+	pubPem, _ := pem.Decode([]byte(a.PublicKey.PublicKeyPem))
+	if pubPem == nil {
+		return nil, ErrPEMDecode
+	}
+
+	var parsedKey interface{}
+	var err error
+	if parsedKey, err = x509.ParsePKIXPublicKey(pubPem.Bytes); err != nil {
+		return nil, err
+	}
+
+	var pubKey *rsa.PublicKey
+	var ok bool
+	if pubKey, ok = parsedKey.(*rsa.PublicKey); !ok {
+		return nil, ErrPEMParse
+	}
+
+	return pubKey, nil
+}
+
+func (a *Actor) PushActivity(activity *Activity, keyId string) (error) {
+	_, err := url.Parse(a.Inbox)
+	if err != nil {
+		return err
+	}
+	reqBody, err := json.Marshal(activity)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", a.Inbox, bytes.NewBuffer(reqBody))
+	if err != nil {
+		return err
+	}
+
+	client := &http.Client{}
+	req.Header.Set("Content-Type", "application/activity+json")
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil
+	}
+	fmt.Println(string(body))
+
+	return nil
+}
+
 func FetchActor(uri string, force bool) (*Actor, error) {
 	// Check Cache
 	if a, found := cActors.Get(uri); found {
@@ -65,25 +121,4 @@ func FetchActor(uri string, force bool) (*Actor, error) {
 	// Set Actor
 	cActors.Set(uri, &actor, cache.DefaultExpiration)
 	return &actor, nil
-}
-
-func (a *Actor) GetPublicKey() (*rsa.PublicKey, error) {
-	pubPem, _ := pem.Decode([]byte(a.PublicKey.PublicKeyPem))
-	if pubPem == nil {
-		return nil, ErrPEMDecode
-	}
-
-	var parsedKey interface{}
-	var err error
-	if parsedKey, err = x509.ParsePKIXPublicKey(pubPem.Bytes); err != nil {
-		return nil, err
-	}
-
-	var pubKey *rsa.PublicKey
-	var ok bool
-	if pubKey, ok = parsedKey.(*rsa.PublicKey); !ok {
-		return nil, ErrPEMParse
-	}
-
-	return pubKey, nil
 }

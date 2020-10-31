@@ -6,7 +6,7 @@ import (
 
 type BlockedPeer struct {
 	gorm.Model
-	URL string
+	Hostname string
 }
 
 func GetBlockedPeers() (*[]BlockedPeer, error) {

@@ -6,7 +6,7 @@ import (
 
 type AllowedPeer struct {
 	gorm.Model
-	URL string
+	Hostname string
 }
 
 func GetAllowedPeers() (*[]AllowedPeer, error) {

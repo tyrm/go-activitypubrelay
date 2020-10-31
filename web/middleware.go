@@ -25,6 +25,8 @@ func MiddlewareLogRequest(next http.Handler) http.Handler {
 	})
 }
 
+
+
 func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		context.Set(r, "validated", false)
@@ -32,7 +34,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 		if r.Header.Get("signature") != "" && r.Method == "POST" {
 			logger.Tracef("http signature detected. parsing json body")
 
-			// sdecode json
+			// decode json
 			decoder := json.NewDecoder(r.Body)
 			var req activitypub.Activity
 			err := decoder.Decode(&req)
@@ -64,7 +66,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 
 			verifier, err := httpsig.NewVerifier(r)
 			if err != nil {
-				msg := fmt.Sprintf("could not initiate verifier")
+				msg := fmt.Sprintf("could not initiate verifier: %s", err.Error())
 				logger.Warningf(msg)
 				http.Error(w, msg, http.StatusInternalServerError)
 				return
