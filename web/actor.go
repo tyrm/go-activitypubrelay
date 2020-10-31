@@ -6,7 +6,7 @@ import (
 )
 
 func HandleActor(w http.ResponseWriter, r *http.Request) {
-	actor, err := json.Marshal(&actor)
+	actor, err := json.Marshal(&myActor)
 	if err != nil {
 		logger.Warningf("Could not marshal JSON: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

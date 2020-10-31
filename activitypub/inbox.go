@@ -1,5 +1,5 @@
 package activitypub
 
-func ProcessInbox(actor *Actor, message *Activity) {
+func ProcessInbox(activity *Activity) {
 
 }

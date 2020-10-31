@@ -54,7 +54,7 @@ func main() {
 
 	activitypub.Init()
 
-	err = web.Init(config.APHost, config.APSerivceName, rsaKey)
+	err = web.Init(config.APHost, config.APServiceName, rsaKey)
 	if err != nil {
 		logger.Errorf("Could init web: %s", err.Error())
 		return

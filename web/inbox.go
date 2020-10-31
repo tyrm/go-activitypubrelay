@@ -1,66 +1,45 @@
 package web
 
 import (
-	"encoding/json"
 	"fmt"
-	"github.com/gorilla/context"
-	"io/ioutil"
 	"litepub1/activitypub"
+	"litepub1/models"
 	"net/http"
+	"net/url"
 )
 
 func HandleInbox(w http.ResponseWriter, r *http.Request) {
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		msg := fmt.Sprintf("could not read body: %s", err.Error())
-		logger.Debugf(msg)
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
-	logger.Tracef("request body: %s", reqBody)
-
 	// check for validation
-	validated := context.Get(r, "validated")
-	if validated == false {
+	validated := r.Context().Value(SignatureValidKey).(bool)
+	if validated != true {
 		msg := "signature validation failed"
 		logger.Debugf(msg)
 		http.Error(w, msg, http.StatusUnauthorized)
 		return
 	}
 
-
-	// decode json
-	decoder := json.NewDecoder(r.Body)
-	var req activitypub.Activity
-	err = decoder.Decode(&req)
+	// get activity
+	activity := r.Context().Value(ActivityKey).(*activitypub.Activity)
+	actor, err := url.Parse(activity.Actor)
 	if err != nil {
-		msg := fmt.Sprintf("could not decode json: %s", err.Error())
+		msg := fmt.Sprintf("could not parse myActor url (%s): %s", activity.Actor, err.Error())
 		logger.Debugf(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
-	// check for actor in body
-	if req.Actor == "" {
-		msg := "no actor in message"
+	// check that instance is a
+	if activity.Type != "Follow" && models.GetFollowedInstanceExists(actor.Host) {
+		msg := fmt.Sprintf("instance (%s) not following relay", actor.Host)
 		logger.Debugf(msg)
 		http.Error(w, msg, http.StatusUnauthorized)
 		return
 	}
 
-
-	//go activitypub.ProcessInbox()
-
-
-	nodeinfo, err := json.Marshal(&wellknownNodeinfo)
-	if err != nil {
-		logger.Warningf("Could not marshal JSON: %s", err.Error())
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	go activitypub.ProcessInbox(activity)
 
 	w.Header().Add("Content-Type", "application/activity+json")
-	_, err = w.Write(nodeinfo)
+	_, err = w.Write([]byte("{}"))
 	if err != nil {
 		logger.Warningf("Could not write response: %s", err.Error())
 		return

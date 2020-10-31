@@ -65,7 +65,7 @@ func (a *Actor) GetPublicKey() (*rsa.PublicKey, error) {
 	return pubKey, nil
 }
 
-func (a *Actor) PushActivity(activity *Activity, keyId string) (error) {
+func (a *Actor) PushActivity(activity *Activity, keyId string) error {
 	_, err := url.Parse(a.Inbox)
 	if err != nil {
 		return err
@@ -113,7 +113,7 @@ func FetchActor(uri string, force bool) (*Actor, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	actor := Actor{}
-	err = json.Unmarshal([]byte(body), &actor)
+	err = json.Unmarshal(body, &actor)
 	if err != nil {
 		return nil, err
 	}

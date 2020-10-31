@@ -6,6 +6,7 @@ import (
 	"net/http"
 )
 
+//noinspection GoNameStartsWithPackageName
 type WebFinger struct {
 	Aliases []string `json:"aliases,omitempty"`
 	Links   []Link   `json:"links,omitempty"`
@@ -24,7 +25,7 @@ func HandleWellKnownWebFinger(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	actor, err := json.Marshal(&webfinger)
+	actor, err := json.Marshal(&myWebfinger)
 	if err != nil {
 		logger.Warningf("Could not marshal JSON: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

@@ -7,8 +7,10 @@ import (
 )
 
 type Config struct {
+	AllowListEnabled bool
+
 	APHost        string
-	APSerivceName string
+	APServiceName string
 
 	DBType       string
 	DBConnString string
@@ -23,6 +25,14 @@ func CollectConfig() *Config {
 	var missingEnv []string
 	var config Config
 
+	// ALLOWLIST_ENABLED
+	var envAllowListEnabled = os.Getenv("ALLOWLIST_ENABLED")
+	if strings.ToLower(envAllowListEnabled) == "true" {
+		config.AllowListEnabled = true
+	} else {
+		config.AllowListEnabled = false
+	}
+
 	// AP_HOST
 	config.APHost = os.Getenv("AP_HOST")
 	if config.APHost == "" {
@@ -32,9 +42,9 @@ func CollectConfig() *Config {
 	// AP_SERVICE_NAME
 	var envAPServiceName = os.Getenv("AP_SERVICE_NAME")
 	if envAPServiceName == "" {
-		config.APSerivceName = "GoActivityRelay"
+		config.APServiceName = "GoActivityRelay"
 	} else {
-		config.APSerivceName = envAPServiceName
+		config.APServiceName = envAPServiceName
 	}
 
 	// DB_TYPE

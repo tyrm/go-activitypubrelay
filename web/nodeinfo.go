@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"litepub1/models"
 	"net/http"
-	"net/url"
 )
 
 
@@ -43,23 +42,16 @@ type WellknownNodeinfo struct {
 
 func HandleNodeinfo20(w http.ResponseWriter, r *http.Request) {
 	nodeinto := nodeinfoTemplate //copy
-	peers, err := models.GetPeers()
+	peers, err := models.GetFollowedInstance()
 	if err != nil {
 		logger.Warningf("Could not get peer list from database: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-
-	peerList := []string{}
+	var peerList []string
 	for _, peer := range *peers {
-		peerURL, err := url.Parse(peer.URL)
-		if err != nil {
-			logger.Warningf("could not parse url %s", peer.URL)
-			continue
-		}
-
-		peerList = append(peerList, peerURL.Host)
+		peerList = append(peerList, peer.Hostname)
 	}
 
 	metadata := make(map[string]*[]string)
@@ -83,7 +75,7 @@ func HandleNodeinfo20(w http.ResponseWriter, r *http.Request) {
 }
 
 func HandleWellKnownNodeInfo(w http.ResponseWriter, r *http.Request) {
-	nodeinfo, err := json.Marshal(&wellknownNodeinfo)
+	nodeinfo, err := json.Marshal(&myWellknownNodeinfo)
 	if err != nil {
 		logger.Warningf("Could not marshal JSON: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

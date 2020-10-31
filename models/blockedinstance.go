@@ -4,13 +4,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type BlockedPeer struct {
+type BlockedInstance struct {
 	gorm.Model
 	Hostname string
 }
 
-func GetBlockedPeers() (*[]BlockedPeer, error) {
-	var blockedPeers []BlockedPeer
+func GetBlockedPeers() (*[]BlockedInstance, error) {
+	var blockedPeers []BlockedInstance
 
 	result := db.Order("url asc").Find(&blockedPeers)
 	if result.Error != nil {
