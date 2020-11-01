@@ -20,24 +20,27 @@ func HandleInbox(w http.ResponseWriter, r *http.Request) {
 
 	// get activity
 	activity := r.Context().Value(ActivityKey).(*activitypub.Activity)
-	actor, err := url.Parse(activity.Actor)
+	instance, err := url.Parse(activity.Actor)
 	if err != nil {
-		msg := fmt.Sprintf("could not parse myActor url (%s): %s", activity.Actor, err.Error())
+		msg := fmt.Sprintf("could not parse actor url (%s): %s", activity.Actor, err.Error())
 		logger.Debugf(msg)
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
 	}
 
-	// check that instance is a
-	if activity.Type != "Follow" && models.GetFollowedInstanceExists(actor.Host) {
-		msg := fmt.Sprintf("instance (%s) not following relay", actor.Host)
+	// check that instance is followed
+	if activity.Type != "Follow" && models.FollowedInstanceExists(instance.Host) {
+		msg := fmt.Sprintf("instance (%s) not following relay", instance.Host)
 		logger.Debugf(msg)
 		http.Error(w, msg, http.StatusUnauthorized)
 		return
 	}
 
-	go activitypub.ProcessInbox(activity)
+	// activity accepted, process activity
+	actor := r.Context().Value(ActorKey).(*activitypub.Actor)
+	go activitypub.ProcessInbox(actor, activity)
 
+	// send response
 	w.Header().Add("Content-Type", "application/activity+json")
 	_, err = w.Write([]byte("{}"))
 	if err != nil {

@@ -11,9 +11,6 @@ import (
 
 type contextKey int
 
-const SignatureValidKey contextKey = 0
-const ActivityKey contextKey = 1
-
 func MiddlewareLogRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -60,7 +57,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 				return
 			}
 
-			// get myActor data
+			// get actor data
 			actorData, err := activitypub.FetchActor(activity.Actor, false)
 			if err != nil {
 				msg := fmt.Sprintf("could not retrieve actor: %s", err.Error())
@@ -69,7 +66,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 				return
 			}
 
-			logger.Tracef("found actor '%s'", activity.Actor)
+			ctx = context.WithValue(ctx, ActorKey, actorData)
 
 			verifier, err := httpsig.NewVerifier(r)
 			if err != nil {

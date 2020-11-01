@@ -9,13 +9,12 @@ type BlockedInstance struct {
 	Hostname string
 }
 
-func GetBlockedPeers() (*[]BlockedInstance, error) {
-	var blockedPeers []BlockedInstance
-
-	result := db.Order("url asc").Find(&blockedPeers)
-	if result.Error != nil {
-		return nil, result.Error
+func BlockedInstanceExists(hostname string) bool {
+	var count int64
+	db.Model(&BlockedInstance{}).Where("hostname = ?", hostname).Count(&count)
+	if count > 0 {
+		return true
 	}
 
-	return &blockedPeers, nil
+	return false
 }

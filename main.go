@@ -24,7 +24,6 @@ func main() {
 	newLogger := loggo.GetLogger("main")
 	logger = &newLogger
 
-
 	err := loggo.ConfigureLoggers(config.LoggerConfig)
 	if err != nil {
 		logger.Errorf("Error configuring Logger: %s", err.Error())
@@ -52,9 +51,9 @@ func main() {
 		return
 	}
 
-	activitypub.Init()
+	activitypub.Init(config.APHost, rsaKey)
 
-	err = web.Init(config.APHost, config.APServiceName, rsaKey)
+	err = web.Init(config.APHost, config.APServiceName, rsaKey, config.AllowlistEnabled)
 	if err != nil {
 		logger.Errorf("Could init web: %s", err.Error())
 		return

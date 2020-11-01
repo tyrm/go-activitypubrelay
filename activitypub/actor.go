@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"github.com/go-fed/httpsig"
 	"github.com/patrickmn/go-cache"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 type PublicKey struct {
@@ -32,8 +34,8 @@ type Actor struct {
 	Endpoints         Endpoints   `json:"endpoints,omitempty"`
 	Followers         string      `json:"followers,omitempty"`
 	Following         string      `json:"following,omitempty"`
-	Icon              Image       `json:"icon,omitempty"`
-	Image             Image       `json:"image,omitempty"`
+	Icon              *Image      `json:"icon,omitempty"`
+	Image             *Image      `json:"image,omitempty"`
 	ID                string      `json:"id,omitempty"`
 	Inbox             string      `json:"inbox,omitempty"`
 	Name              string      `json:"name,omitempty"`
@@ -65,34 +67,68 @@ func (a *Actor) GetPublicKey() (*rsa.PublicKey, error) {
 	return pubKey, nil
 }
 
-func (a *Actor) PushActivity(activity *Activity, keyId string) error {
-	_, err := url.Parse(a.Inbox)
+func (a *Actor) PushActivity(activity *Activity) error {
+	// init signer
+	prefs := []httpsig.Algorithm{httpsig.RSA_SHA512, httpsig.RSA_SHA256}
+	digestAlgorithm := httpsig.DigestSha256
+	headersToSign := []string{httpsig.RequestTarget, "date", "digest", "host"}
+
+	signer, chosenAlgo, err := httpsig.NewSigner(prefs, digestAlgorithm, headersToSign, httpsig.Signature, 1800)
 	if err != nil {
 		return err
 	}
-	reqBody, err := json.Marshal(activity)
+	logger.Tracef("chosen signing algorithm: %s", chosenAlgo)
+
+	// create body
+	body, err := json.Marshal(activity)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", a.Inbox, bytes.NewBuffer(reqBody))
+	// create http request
+	req, err := http.NewRequest("POST", a.Inbox, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
+	req.Header.Set("Content-Type", "application/activity+json")
+
+	// add date header
+	location,_ := time.LoadLocation("GMT")
+	currentTime := time.Now().In(location)
+	req.Header.Set("Date", currentTime.Format(time.RFC1123))
+
+	// add host header
+	inbox, err := url.Parse(a.Inbox)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Host", inbox.Host)
+
+	// sign request
+	err = signer.SignRequest(myPrivateKey, fmt.Sprintf("https://%s/actor#main-key", myAPHost), req, body)
+	if err != nil {
+		return err
+	}
+
+	// do request
+	logger.Debugf("sending actor (%s): %s", a.Inbox, string(body))
 
 	client := &http.Client{}
-	req.Header.Set("Content-Type", "application/activity+json")
 	res, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
+	for k, v := range req.Header {
+		logger.Tracef("Header field %q, Value %q", k, v)
+	}
+
 	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
+	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
 		return nil
 	}
-	fmt.Println(string(body))
+	logger.Debugf("actor (%s) returned %d: %s", a.Inbox, res.StatusCode, string(body))
 
 	return nil
 }

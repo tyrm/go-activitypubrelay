@@ -41,7 +41,11 @@ func Init(dbType, dbConnString string) error {
 	}
 
 	// Migrate the schema
-	err := db.AutoMigrate(&FollowedInstance{})
+	err := db.AutoMigrate(
+		&AllowedInstance{},
+		&BlockedInstance{},
+		&FollowedInstance{},
+	)
 	if err != nil {
 		return err
 	}

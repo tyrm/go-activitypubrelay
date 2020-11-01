@@ -7,7 +7,7 @@ import (
 )
 
 type Config struct {
-	AllowListEnabled bool
+	AllowlistEnabled bool
 
 	APHost        string
 	APServiceName string
@@ -26,11 +26,11 @@ func CollectConfig() *Config {
 	var config Config
 
 	// ALLOWLIST_ENABLED
-	var envAllowListEnabled = os.Getenv("ALLOWLIST_ENABLED")
-	if strings.ToLower(envAllowListEnabled) == "true" {
-		config.AllowListEnabled = true
+	var envAllowlistEnabled = os.Getenv("ALLOWLIST_ENABLED")
+	if strings.ToLower(envAllowlistEnabled) == "true" {
+		config.AllowlistEnabled = true
 	} else {
-		config.AllowListEnabled = false
+		config.AllowlistEnabled = false
 	}
 
 	// AP_HOST

@@ -42,7 +42,7 @@ type WellknownNodeinfo struct {
 
 func HandleNodeinfo20(w http.ResponseWriter, r *http.Request) {
 	nodeinto := nodeinfoTemplate //copy
-	peers, err := models.GetFollowedInstance()
+	peers, err := models.ReadFollowedInstances()
 	if err != nil {
 		logger.Warningf("Could not get peer list from database: %s", err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)

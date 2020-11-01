@@ -12,6 +12,7 @@ import (
 )
 
 var (
+	apAllowlistEnabled  bool
 	apHost              string
 	logger              *loggo.Logger
 	myActor             activitypub.Actor
@@ -26,11 +27,16 @@ type Link struct {
 	Type string `json:"type,omitempty"`
 }
 
-func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey) error {
+const SignatureValidKey contextKey = 0
+const ActivityKey contextKey = 1
+const ActorKey contextKey = 2
+
+func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey, AllowlistEnabled bool) error {
 	newLogger := loggo.GetLogger("web")
 	logger = &newLogger
 
 	// Store Config
+	apAllowlistEnabled = AllowlistEnabled
 	apHost = APHost
 
 	// Get RSA Text
@@ -78,28 +84,28 @@ func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey) error {
 		Inbox:     fmt.Sprintf("https://%s/inbox", APHost),
 		Name:      APServiceName,
 		Type:      "Application",
-		ID:        fmt.Sprintf("https://%s/myActor", APHost),
+		ID:        fmt.Sprintf("https://%s/actor", APHost),
 		PublicKey: activitypub.PublicKey{
-			ID:           fmt.Sprintf("https://%s/myActor#main-key", APHost),
-			Owner:        fmt.Sprintf("https://%s/myActor", APHost),
+			ID:           fmt.Sprintf("https://%s/actor#main-key", APHost),
+			Owner:        fmt.Sprintf("https://%s/actor", APHost),
 			PublicKeyPem: fmt.Sprintf("%s", pemdata),
 		},
 		Summary:           "GoActivityRelay bot",
 		PreferredUsername: "relay",
-		URL:               fmt.Sprintf("https://%s/myActor", APHost),
+		URL:               fmt.Sprintf("https://%s/actor", APHost),
 	}
 
 	// Init myWebfinger
 	myWebfinger = WebFinger{
-		Aliases: []string{fmt.Sprintf("https://%s/myActor", APHost)},
+		Aliases: []string{fmt.Sprintf("https://%s/actor", APHost)},
 		Links: []Link{
 			{
-				HRef: fmt.Sprintf("https://%s/myActor", APHost),
+				HRef: fmt.Sprintf("https://%s/actor", APHost),
 				Rel:  "self",
 				Type: "application/activity+json",
 			},
 			{
-				HRef: fmt.Sprintf("https://%s/myActor", APHost),
+				HRef: fmt.Sprintf("https://%s/actor", APHost),
 				Rel:  "self",
 				Type: "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"",
 			},
@@ -122,11 +128,11 @@ func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey) error {
 	r.Use(MiddlewareHttpSignatures)
 	r.Use(MiddlewareLogRequest)
 
-	r.HandleFunc("/myActor", HandleActor).Methods("GET")
+	r.HandleFunc("/actor", HandleActor).Methods("GET")
 	r.HandleFunc("/inbox", HandleInbox).Methods("POST")
 	r.HandleFunc("/nodeinfo/2.0.json", HandleNodeinfo20).Methods("GET")
 	r.HandleFunc("/.well-known/nodeinfo", HandleWellKnownNodeInfo).Methods("GET")
-	r.HandleFunc("/.well-known/myWebfinger", HandleWellKnownWebFinger).Methods("GET")
+	r.HandleFunc("/.well-known/webfinger", HandleWellKnownWebFinger).Methods("GET")
 
 	r.PathPrefix("/").HandlerFunc(HandleCatchAll) // Workaround to log all requests
 	go func() {
