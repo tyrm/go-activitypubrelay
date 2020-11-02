@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/go-fed/httpsig"
 	"github.com/patrickmn/go-cache"
+	"github.com/tyrm/httpsig"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -69,7 +69,8 @@ func (a *Actor) GetPublicKey() (*rsa.PublicKey, error) {
 
 func (a *Actor) PushActivity(activity *Activity) error {
 	// init signer
-	prefs := []httpsig.Algorithm{httpsig.RSA_SHA512, httpsig.RSA_SHA256}
+	//prefs := []httpsig.Algorithm{httpsig.RSA_SHA512, httpsig.RSA_SHA256}
+	prefs := []httpsig.Algorithm{httpsig.RSA_SHA256}
 	digestAlgorithm := httpsig.DigestSha256
 	headersToSign := []string{httpsig.RequestTarget, "date", "digest", "host"}
 
@@ -126,9 +127,24 @@ func (a *Actor) PushActivity(activity *Activity) error {
 	defer res.Body.Close()
 	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil
+		return err
 	}
 	logger.Debugf("actor (%s) returned %d: %s", a.Inbox, res.StatusCode, string(body))
+
+	// Verify
+	verifier, err := httpsig.NewVerifier(req)
+	if err != nil {
+		logger.Warningf("could not initiate verifier: %s", err.Error())
+		return err
+	}
+
+	var algo = httpsig.RSA_SHA256
+	if err := verifier.Verify(myPrivateKey.Public(), algo); err != nil {
+		logger.Warningf("sent message signature verification failed: %s", err.Error())
+		return err
+	}
+
+	logger.Debugf("self verification passed")
 
 	return nil
 }

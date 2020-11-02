@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/go-fed/httpsig"
+	"github.com/tyrm/httpsig"
 	"litepub1/activitypub"
 	"net/http"
+	"strings"
 )
 
 type contextKey int
@@ -49,7 +50,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 			// Save activity to context
 			ctx = context.WithValue(ctx, ActivityKey, &activity)
 
-			// check for myActor in body
+			// check for actor in body
 			if activity.Actor == "" {
 				msg := "signature check failed, no actor in message"
 				logger.Debugf(msg)
