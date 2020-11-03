@@ -28,8 +28,6 @@ type Link struct {
 }
 
 const SignatureValidKey contextKey = 0
-const ActivityKey contextKey = 1
-const ActorKey contextKey = 2
 
 func Init(APHost, APServiceName string, rsaKey *rsa.PrivateKey, AllowlistEnabled bool) error {
 	newLogger := loggo.GetLogger("web")

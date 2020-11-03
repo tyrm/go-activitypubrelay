@@ -34,6 +34,8 @@ func ProcessFollow(actor *Actor, activity *Activity) {
 		// check if object is actor
 		logger.Tracef("Follow object (%s) is: %v", reflect.TypeOf(activity.Object), activity.Object)
 
+		// prepare accept message
+		logger.Tracef("Follow ID is: %s", activity.ID)
 		message := Activity{
 			Context: "https://www.w3.org/ns/activitystreams",
 			Type: "Accept",

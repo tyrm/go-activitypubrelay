@@ -2,11 +2,11 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/tyrm/httpsig"
 	"litepub1/activitypub"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -34,32 +34,47 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), SignatureValidKey, false)
 
 		if r.Header.Get("signature") != "" && r.Method == "POST" {
-			logger.Tracef("http signature detected. parsing json body")
+			logger.Tracef("http signature detected: %s", r.Header.Get("signature"))
+			sigParts := strings.Split(r.Header.Get("signature"), ",")
 
-			// decode json
-			decoder := json.NewDecoder(r.Body)
-			var activity activitypub.Activity
-			err := decoder.Decode(&activity)
-			if err != nil {
-				msg := fmt.Sprintf("could not decode json: %s", err.Error())
-				logger.Debugf(msg)
-				http.Error(w, msg, http.StatusInternalServerError)
-				return
+			signature := make(map[string]string)
+			for _, p := range sigParts {
+				r, _ := regexp.Compile("(.+)=\"(.+)\"")
+				splitParts := r.FindStringSubmatch(p)
+				signature[splitParts[1]] = splitParts[2]
 			}
 
+			// decode json
+			//decoder := json.NewDecoder(r.Body)
+			//var activity activitypub.Activity
+			//err := decoder.Decode(&activity)
+			//if err != nil {
+			//	msg := fmt.Sprintf("could not decode json: %s", err.Error())
+			//	logger.Debugf(msg)
+			//	http.Error(w, msg, http.StatusInternalServerError)
+			//	return
+			//}
+
 			// Save activity to context
-			ctx = context.WithValue(ctx, ActivityKey, &activity)
+			//ctx = context.WithValue(ctx, ActivityKey, &activity)
 
 			// check for actor in body
-			if activity.Actor == "" {
-				msg := "signature check failed, no actor in message"
+			//if activity.Actor == "" {
+			//	msg := "signature check failed, no actor in message"
+			//	logger.Debugf(msg)
+			//	http.Error(w, msg, http.StatusBadRequest)
+			//	return
+			//}
+			var keyID string
+			var ok bool
+			if keyID, ok = signature["keyId"]; !ok {
+				msg := "signature check failed, no keyId in signature"
 				logger.Debugf(msg)
 				http.Error(w, msg, http.StatusBadRequest)
-				return
 			}
 
 			// get actor data
-			actorData, err := activitypub.FetchActor(activity.Actor, false)
+			actorData, err := activitypub.FetchActor(keyID, false)
 			if err != nil {
 				msg := fmt.Sprintf("could not retrieve actor: %s", err.Error())
 				logger.Warningf(msg)
@@ -67,7 +82,7 @@ func MiddlewareHttpSignatures(next http.Handler) http.Handler {
 				return
 			}
 
-			ctx = context.WithValue(ctx, ActorKey, actorData)
+			//ctx = context.WithValue(ctx, ActorKey, actorData)
 
 			verifier, err := httpsig.NewVerifier(r)
 			if err != nil {
